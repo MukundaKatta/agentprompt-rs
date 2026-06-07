@@ -71,10 +71,7 @@ impl Messages {
 
     /// Render every entry against `vars`. Each template is compiled fresh;
     /// for hot loops, compile once via [`Prompt`] and reuse.
-    pub fn render<T: serde::Serialize>(
-        &self,
-        vars: &T,
-    ) -> Result<Vec<Message>, PromptError> {
+    pub fn render<T: serde::Serialize>(&self, vars: &T) -> Result<Vec<Message>, PromptError> {
         let mut out = Vec::with_capacity(self.entries.len());
         for (role, tmpl) in &self.entries {
             let p = Prompt::new(tmpl.clone())?;

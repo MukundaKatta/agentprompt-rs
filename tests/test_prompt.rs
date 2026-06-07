@@ -4,16 +4,19 @@ use serde_json::json;
 #[test]
 fn basic_substitution() {
     let p = Prompt::new("Hello, {{name}}!").unwrap();
-    assert_eq!(p.render(&json!({"name": "world"})).unwrap(), "Hello, world!");
+    assert_eq!(
+        p.render(&json!({"name": "world"})).unwrap(),
+        "Hello, world!"
+    );
 }
 
 #[test]
 fn conditionals() {
-    let p = Prompt::new(
-        "{% if premium %}Welcome back!{% else %}Hi there{% endif %}",
-    )
-    .unwrap();
-    assert_eq!(p.render(&json!({"premium": true})).unwrap(), "Welcome back!");
+    let p = Prompt::new("{% if premium %}Welcome back!{% else %}Hi there{% endif %}").unwrap();
+    assert_eq!(
+        p.render(&json!({"premium": true})).unwrap(),
+        "Welcome back!"
+    );
     assert_eq!(p.render(&json!({"premium": false})).unwrap(), "Hi there");
 }
 
@@ -90,4 +93,33 @@ fn message_serializes_with_lowercase_role() {
 fn empty_messages_renders_empty_vec() {
     let msgs = Messages::new().render(&json!({})).unwrap();
     assert!(msgs.is_empty());
+}
+
+#[test]
+fn messages_push_with_explicit_role() {
+    let msgs = Messages::new()
+        .push(Role::System, "sys")
+        .push(Role::User, "{{q}}")
+        .render(&json!({"q": "hello"}))
+        .unwrap();
+    assert_eq!(msgs.len(), 2);
+    assert_eq!(msgs[0].role, Role::System);
+    assert_eq!(msgs[0].content, "sys");
+    assert_eq!(msgs[1].role, Role::User);
+    assert_eq!(msgs[1].content, "hello");
+}
+
+#[test]
+fn prompt_can_be_rendered_repeatedly() {
+    let p = Prompt::new("Hi {{name}}").unwrap();
+    assert_eq!(p.render(&json!({"name": "a"})).unwrap(), "Hi a");
+    assert_eq!(p.render(&json!({"name": "b"})).unwrap(), "Hi b");
+}
+
+#[test]
+fn prompt_error_display_messages() {
+    let render_err = PromptError::Render("boom".into());
+    assert_eq!(render_err.to_string(), "render error: boom");
+    let syntax_err = PromptError::Syntax("oops".into());
+    assert_eq!(syntax_err.to_string(), "template syntax error: oops");
 }

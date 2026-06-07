@@ -32,9 +32,8 @@ impl Prompt {
     /// Compile `source` as a template. Validates Jinja2 syntax up front.
     pub fn new(source: impl Into<String>) -> Result<Self, PromptError> {
         let mut env = minijinja::Environment::new();
-        // Permissive defaults: leave unknown vars as empty strings on
-        // strict_mode = false. We want hard fails for missing vars so
-        // bugs surface early.
+        // Fail hard on missing variables so bugs surface early instead of
+        // silently rendering an empty string in place of the missing value.
         env.set_undefined_behavior(minijinja::UndefinedBehavior::Strict);
         env.add_template_owned("inline", source.into())?;
         Ok(Self {
